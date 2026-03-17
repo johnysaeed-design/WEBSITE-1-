@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="description" content="A journal and a study tool">
+    <meta name="author" content="John Said">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>study journal</title>
+    <link rel="stylesheet" href="mynotebook.css">
+  </head>
+  <body>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+      <b style="font-size:15px">study journal</b><span id="pts" style="color:#aaf;font-size:13px">0 pts</span>
+    </div>
+    <nav>
+      <button class="on" onclick="go(this,'todo')">tasks</button>
+      <button onclick="go(this,'pomo')">pomo</button>
+      <button onclick="go(this,'notes')">notes</button>
+      <button onclick="go(this,'more')">more</button>
+    </nav>
+    <section id="todo" class="on">
+      <h3>today — <span id="gc" style="color:#6dbf6d"></span></h3>
+      <div id="tl"></div>
+      <div class="row" style="border:none"><input id="ti" placeholder="add task… enter to save" onkeydown="if(event.key==='Enter')addT()"><button onclick="addT()">+</button></div>
+    </section>
+    <section id="pomo">
+      <div class="big" id="disp">25:00</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px">
+        <button id="pb" onclick="tog()">start</button><button onclick="rst()">reset</button>
+      </div>
+      <div class="row" style="border:none;gap:8px">
+        <input id="wm" type="number" value="25" placeholder="work"><input id="bm" type="number" value="5" placeholder="break">
+      </div>
+      <p style="text-align:center;color:#555;font-size:12px;margin-top:8px">sessions: <b id="sc">0</b> · +15 pts each</p>
+    </section>
+    <section id="notes">
+      <h3>quick note</h3>
+      <textarea id="nt" rows="3" placeholder="Write anything…"></textarea>
+      <button onclick="svN()" style="width:100%;margin-top:6px">save note</button>
+      <h3>saved</h3><div id="nl"></div>
+    </section>
+    <section id="more" style="text-align:center;padding:28px 0;color:#444;line-height:1.9">
+      <div style="font-size:22px;color:#666;margin-bottom:8px">coming soon</div>
+      weekly goals · monthly goals<br>money tracker · habit streaks<br>full calendar · AI companion
+    </section>
+    <script>
+    let pts=0,sess=0,T=[],N=[];
+    let p={on:false,work:true,sas:25*60,sat:null,iv:null};
+    const $=id=>document.getElementById(id), pad=n=>String(n).padStart(2,'0'), fmt=s=>pad(Math.floor(s/60))+':'+pad(s%60);
+    function go(b,id){document.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.querySelectorAll('section').forEach(s=>s.classList.remove('on'));$(id).classList.add('on')}
+    function ap(n){pts+=n;$('pts').textContent=pts+' pts'}
+    function rt(){$('tl').innerHTML=T.map((t,i)=>`<div class="row"><input type="checkbox"${t.d?' checked':''}onchange="ck(${i})"><span style="flex:1"class="${t.d?'out':''}">${t.t}</span><button onclick="T.splice(${i},1);rt()"style="padding:2px 7px;color:#f66">×</button></div>`).join('');$('gc').textContent=T.filter(t=>t.d).length+'/'+T.length}
+    function addT(){const v=$('ti').value.trim();if(v){T.push({t:v,d:false});$('ti').value='';rt()}}
+    function ck(i){T[i].d=!T[i].d;ap(T[i].d?10:-10);rt()}
+    function tick(){if(!p.on)return;const r=Math.max(0,p.sas-Math.floor((Date.now()-p.sat)/1e3));$('disp').textContent=fmt(r);if(r<=0){clearInterval(p.iv);p.on=false;p.iv=null;if(p.work){sess++;$('sc').textContent=sess;ap(15)}alert(p.work?'Done! Take a break.':'Break over!');p.work=!p.work;rst()}}
+    function tog(){if(p.on){clearInterval(p.iv);p.on=false;p.sas=Math.max(0,p.sas-Math.floor((Date.now()-p.sat)/1e3));$('pb').textContent='start';$('disp').classList.remove('go')}else{p.on=true;p.sat=Date.now();p.iv=setInterval(tick,500);$('pb').textContent='pause';$('disp').classList.add('go')}}
+    function rst(){clearInterval(p.iv);p.on=false;p.iv=null;p.sas=(p.work?+$('wm').value:+$('bm').value)*60;$('disp').textContent=fmt(p.sas);$('disp').classList.remove('go');$('pb').textContent='start'}
+    function svN(){const v=$('nt').value.trim();if(!v)return;N.unshift({d:new Date().toLocaleDateString(),t:v});$('nt').value='';$('nl').innerHTML=N.map((n,i)=>`<div class="row"style="flex-direction:column;align-items:start"><small style="color:#555">${n.d}<button onclick="N.splice(${i},1);svN()"style="padding:1px 6px;margin-left:6px;color:#f66">×</button></small><span>${n.t}</span></div>`).join('')}
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&p.on)tick()});
+    </script>
+  </body>
+</html>
